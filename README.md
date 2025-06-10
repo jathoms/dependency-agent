@@ -28,5 +28,5 @@ check out the `uv` command and `uv help` to figure out what's going on with uv.
 ## use just
 
 type `just go` to launch the python stuff
-type `just mvn` to mvn install the working pom (need maven and jdk21)
-type `just mvnbroken` to mvn install the broken pom
+type `just mvn1` to mvn install the working pom (need maven and jdk21)
+type `just mvnbroken1` to mvn install the broken pom
