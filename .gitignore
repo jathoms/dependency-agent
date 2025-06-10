@@ -1,3 +1,6 @@
 .venv/
+.vscode/
 dist/
+.env
 *.pyc
+maven/*/target/
