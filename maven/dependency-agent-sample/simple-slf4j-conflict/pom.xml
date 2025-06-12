@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+                             http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.example</groupId>
+    <artifactId>simple-slf4j-conflict</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
+
+    <properties>
+        <!-- Encoding and versions -->
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <maven.compiler.release>21</maven.compiler.release>
+        <maven.compiler.pluginVersion>3.10.1</maven.compiler.pluginVersion>
+        <exec.pluginVersion>3.1.0</exec.pluginVersion>
+        <enforcer.pluginVersion>3.3.0</enforcer.pluginVersion>
+    </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <!-- Force SLF4J API to 1.7.30 -->
+            <dependency>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-api</artifactId>
+                <version>1.7.30</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <dependencies>
+        <!-- A: logback-classic brings slf4j-api (overridden to 1.7.30) -->
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
+            <version>1.2.3</version>
+        </dependency>
+
+        <!-- B: slf4j-simple brings its own implementation -->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-simple</artifactId>
+            <version>1.7.30</version>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <!-- Enforce Maven 3.8.4+ -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-enforcer-plugin</artifactId>
+                <version>${enforcer.pluginVersion}</version>
+                <executions>
+                    <execution>
+                        <id>enforce-maven-version</id>
+                        <goals>
+                            <goal>enforce</goal>
+                        </goals>
+                        <configuration>
+                            <rules>
+                                <requireMavenVersion>
+                                    <version>[3.8.4,)</version>
+                                    <message>Maven 3.8.4 or later is required.</message>
+                                </requireMavenVersion>
+                            </rules>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- Compile with Java 21 -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>${maven.compiler.pluginVersion}</version>
+                <configuration>
+                    <release>${maven.compiler.release}</release>
+                </configuration>
+            </plugin>
+
+            <!-- Execute main class -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>${exec.pluginVersion}</version>
+                <configuration>
+                    <mainClass>com.example.App</mainClass>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>
