@@ -3,4 +3,4 @@
 dist/
 .env
 *.pyc
-maven/*/target/
+maven/**/target/
