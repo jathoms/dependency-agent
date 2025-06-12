@@ -4,6 +4,9 @@
 go:
     uv build && uv run depguy
 
+case1:
+	uv run depguy -d maven/demo-app -j mvnbroken1 -p pom_that_do_not_work.xml
+
 # Demo app Maven commands
 mvn1:
     cd maven/demo-app && mvn clean install
@@ -17,7 +20,7 @@ log4j_broken_build:
 	cd maven/dependency-agent-sample/log4j-logback-conflict && mvn -f pom-broken.xml clean compile
 
 log4j_broken_run:
-	cd maven/dependency-agent-sample/log4j-logback-conflict && mvn -f pom-broken.xml clean compile exec:java -Dexec.mainClass=com.example.App
+	cd maven/dependency-agent-sample/log4j-logback-conflict && mvn -f pom-broken.xml clean compile exec:java -Dexec.mainClass=com.example.App && mvn package && java -cp target/log4j-logback-conflict-1.0.0-SNAPSHOT.jar com.example.App
 
 log4j_fixed_build:
 	cd maven/dependency-agent-sample/log4j-logback-conflict && mvn clean compile
@@ -45,7 +48,7 @@ slf4j_broken_build:
 	cd maven/dependency-agent-sample/simple-slf4j-conflict && mvn -f pom-broken.xml clean compile
 
 slf4j_broken_run:
-	cd maven/dependency-agent-sample/simple-slf4j-conflict && mvn -f pom-broken.xml clean compile exec:java -Dexec.mainClass=com.example.App
+	cd maven/dependency-agent-sample/simple-slf4j-conflict && mvn -f pom-broken.xml clean compile exec:java -Dexec.mainClass=com.example.App && mvn package && java -cp target/simple-slf4j-conflict-1.0.0-SNAPSHOT.jar com.example.App
 
 slf4j_fixed_build:
 	cd maven/dependency-agent-sample/simple-slf4j-conflict && mvn clean compile
