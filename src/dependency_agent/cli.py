@@ -9,6 +9,15 @@ from pathlib import Path
 from pydantic import BaseModel
 from collections import defaultdict
 from googlesearch import search
+from rich import print
+from rich.console import Console
+from rich.json import JSON
+from rich.panel import Panel
+from rich.syntax import Syntax
+
+MVN_DEP_TREE_NAME = "org.apache.maven.plugins:maven-dependency-plugin:3.8.1:tree"
+
+console = Console()
 
 
 class ProblematicPackage(BaseModel):
@@ -68,7 +77,7 @@ def main() -> None:
 
     args = parser.parse_args()
 
-    project_dir = Path(os.path.curdir).joinpath(args.dir)
+    project_dir = Path(os.path.curdir).joinpath(args.dir).resolve().absolute()
     filepath = project_dir.joinpath(args.pom)
     if not filepath.exists() and not args.just:
         print(f"No file named {filepath.absolute()} found.")
@@ -93,13 +102,11 @@ def main() -> None:
     ]
 
     if mvn_result.returncode == 0:
-        print("Build succeeded – no dependency issues detected.")
+        print("Build succeeded - no dependency issues detected.")
         sys.exit(0)
 
     deptree = subprocess.run(
-        [
-            f"cd {project_dir} && mvn dependency:tree -DoutputType=json -f {args.pom} -Dverbose"
-        ],
+        [f"mvn {MVN_DEP_TREE_NAME} -DoutputType=json -f {filepath} -Dverbose"],
         capture_output=True,
         text=True,
         shell=True,
@@ -143,8 +150,10 @@ def main() -> None:
     problematic_package: ProblematicPackage = ProblematicPackage.model_validate_json(
         response.output_text
     )
+    
+    formatted_pkg_name = f"[green]{problematic_package.package_plain_name}[/green]"
 
-    print("Inferred problematic package:", problematic_package.package_plain_name)
+    print("Inferred problematic package:", formatted_pkg_name)
     versions = collect_versions(deptree_dict, problematic_package.package_plain_name)
 
     multi_version_packages = {k: v for k, v in versions.items() if len(v) > 1}
@@ -156,8 +165,12 @@ def main() -> None:
         used_version = min(value, key=lambda x: x[1])[0]
         oldest_version = min(value, key=lambda x: x[0])[0]
         newest_version = max(value, key=lambda x: x[0])[0]
+        
+        versions_str = f"\nOldest: {oldest_version}\nNewest: {newest_version}\nUsed:   {used_version}\n"
+
         print(
-            {"oldest": oldest_version, "newest": newest_version, "used": used_version}
+            f"Found the following overlapping versions of {formatted_pkg_name} in your project:"
+            f" {versions_str}"
         )
 
         first_url = next(
@@ -169,6 +182,7 @@ def main() -> None:
             ),
             None,
         )
+
         print("Finding changelog entries...")
         resp = requests.get(first_url, timeout=10)
         if resp.status_code != 200:
@@ -176,11 +190,21 @@ def main() -> None:
             sys.exit(1)
         html = resp.text
         # quick sanity check: verify both version numbers appear in the page text
-        if oldest_version not in html or used_version not in html:
+        if (
+            oldest_version not in html
+            or used_version not in html
+            or newest_version not in html
+        ):
             print(
                 "Changelog page found, but expected versions not present - might be the wrong page."
             )
             sys.exit(1)
+        print(
+            f"Found mentions of versions {oldest_version} and {newest_version} on page {first_url}"
+        )
+        print(
+            f"Reading changelog between versions {oldest_version} and {newest_version}..."
+        )
 
         idx_new = html.find(newest_version)
         idx_old = html.find(oldest_version)
@@ -207,7 +231,8 @@ def main() -> None:
 
                 Between version {oldest_version} and {newest_version}, find **only** those entries that directly **introduce**, **remove**, or **break** the exact classes, methods, or fields cited in this build-error.  
                 - **Exclude** any entry that is purely a bug-fix, documentation change, performance tweak, or otherwise unrelated to the missing/changed symbols in the error.  
-                - For each relevant entry, quote the snippet and tag it with its version and ISO release date (if given).  
+                - For each relevant entry, quote the snippet and tag it with its version and release date. Include the release date *if and only if* the release date of **that release** is given **immediately before or immediately after** the mention of the version.
+                - When quoting, remove html tags and escape sequences as the output will be plain text.
 
                 Context:
                 - Current version in use: {used_version}  
@@ -219,6 +244,7 @@ def main() -> None:
                 2. If the error is about a class/method **changing** (signature, behavior, config), include the entry where that change was **made**.  
                 3. **Do not** include entries that merely fix bugs or add features unrelated to the failing symbol.
                 4. If the entry does not seem directly relevant, do not include it.
+                5. If the justification for the entry would merely be "This entry mentions a relevant class", do not include that entry.
                 """,
             },
         ]
@@ -229,4 +255,20 @@ def main() -> None:
         advice_json = response.output_text
         changelog_analysis = ChangelogAnalysisOutput.model_validate_json(advice_json)
 
-        print(changelog_analysis.model_dump_json(indent=2))
+        json_str = changelog_analysis.model_dump_json(indent=2)
+
+        syntax = Syntax(
+            json_str,
+            "json",
+            theme="ansi_light",
+            line_numbers=False,
+            word_wrap=True,      
+        )
+        panel = Panel(
+            syntax,
+            title="Changelog items found, review these entries.",
+            subtitle=f"Changelog sourced from {first_url}",
+            border_style="magenta",
+        )
+
+        console.print(panel)
