@@ -1,5 +1,4 @@
 from openai import OpenAI
-import pprint
 import requests
 import json
 import os
@@ -21,6 +20,7 @@ class ChangelogEntryAnalysis(BaseModel):
     release_date: str
     changelog_quote: str
     explanation_relevant_to_build_failure: str
+    advice_to_fix: str
 
 
 class ChangelogAnalysisOutput(BaseModel):
@@ -191,7 +191,7 @@ def main() -> None:
         if idx_new > idx_old:
             idx_new, idx_old = idx_old, idx_new
         relevant_section = html[idx_new:idx_old]
-        
+
         # print(filtered_errors)
         # print(relevant_section)
 
@@ -219,7 +219,7 @@ def main() -> None:
                 2. If the error is about a class/method **changing** (signature, behavior, config), include the entry where that change was **made**.  
                 3. **Do not** include entries that merely fix bugs or add features unrelated to the failing symbol.
                 4. If the entry does not seem directly relevant, do not include it.
-                """
+                """,
             },
         ]
 
