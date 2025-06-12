@@ -2,11 +2,11 @@
 
 # UV application commands
 go:
-	uv build && uv run depguy
+    uv build && uv run depguy
 
 # Demo app Maven commands
 mvn1:
-	cd maven/demo-app && mvn clean install
+    cd maven/demo-app && mvn clean install
 
 mvnbroken1:
 	cd maven/demo-app && mvn -f pom_that_do_not_work.xml clean install
