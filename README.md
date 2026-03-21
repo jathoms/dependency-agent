@@ -1,6 +1,6 @@
-# Dependency Agent Sample Project
+# Dependency Agent - 2025 Hackathon
 
-This project contains multi-module Maven configurations designed to demonstrate how tools like [`uv`](https://github.com/astral-sh/uv) and [`just`](https://github.com/casey/just) can be used to manage builds, virtual environments, and version conflicts in Java-based systems.
+This project contains multi-module Maven configurations designed to demonstrate how generative AI can be used to solve version conflicts in Java-based systems.
 
 In particular, this repository includes:
 
@@ -9,9 +9,7 @@ In particular, this repository includes:
 * A Python support layer using `uv` to sandbox and script auxiliary tasks.
 * A `justfile` to simplify common operations.
 
-## 🚀 Hackathon Project: Dependency Agent (Summary)
-
-This project was developed during an internal hackathon by Abdul Hakim Norazman and James Thompson from AM Research Tech.
+This project was developed during an internal hackathon by Abdul Hakim Norazman and James Thomson from JPMC.
 
 **Goal:** Create a smart assistant that helps resolve Maven dependency conflicts by analyzing errors, fetching changelogs, and suggesting code fixes.
 
